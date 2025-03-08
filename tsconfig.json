@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // 타겟 JavaScript 버전
+    "module": "CommonJS", // 모듈 시스템
+    "outDir": "./dist", // 컴파일된 JS 파일이 저장될 위치
+    "rootDir": "./src", // TS 소스 파일 위치
+    "esModuleInterop": true, // import/export 호환성
+    "strict": true // 엄격한 타입 검사
+  },
+  "include": ["src/**/*"], // 컴파일할 파일들
+  "exclude": ["node_modules", "dist", "example"]
+}
