@@ -1,13 +1,14 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = {
   mode: "development",
   entry: [
-    // HMR 클라이언트 추가
-    path.resolve(__dirname, "src/socketClient.ts"),
     // 기존 진입점
-    "./src/index.ts",
+    "./src/index.js",
+    // 소켓 클라이언트
+    "./src/hmrClient.ts",
   ],
   module: {
     rules: [

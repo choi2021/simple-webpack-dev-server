@@ -1,9 +1,10 @@
+let count = 0; // 모듈 레벨로 상태 이동
+
 export function createCounter() {
   const div = document.createElement("div");
-  let count = 0;
 
   const h1 = document.createElement("h1");
-  h1.textContent = "카운터 예제";
+  h1.textContent = "카운터 예제1234";
 
   const p = document.createElement("p");
   p.textContent = `현재 카운트: ${count}`;
