@@ -1,15 +1,22 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const webpack = require("webpack");
 
-module.exports = {
+const baseConfig = {
+  devtool: false,
   mode: "development",
-  entry: [
-    // 기존 진입점
-    "./src/index.js",
-    // 소켓 클라이언트
-    "./src/hmrClient.ts",
-  ],
+  entry: ["./src/example/index.js"],
+  output: {
+    publicPath: "/",
+    path: path.resolve(__dirname, "dist"),
+    filename: "bundle.js",
+  },
+  devServer: {
+    static: "./dist",
+    hot: true,
+    watchPath: "src/example",
+    port: 3000,
+  },
+  target: ["web", "es5"],
   module: {
     rules: [
       {
@@ -22,14 +29,12 @@ module.exports = {
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
   },
-  output: {
-    filename: "bundle.js",
-    path: path.resolve(__dirname, "dist"),
-  },
   plugins: [
     new HtmlWebpackPlugin({
-      title: "Development",
-      template: "./src/index.html",
+      template: "./src/example/index.html",
     }),
   ],
+  devtool: "inline-source-map",
 };
+
+module.exports = baseConfig;

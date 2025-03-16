@@ -5,7 +5,9 @@
     "outDir": "./dist", // 컴파일된 JS 파일이 저장될 위치
     "rootDir": "./src", // TS 소스 파일 위치
     "esModuleInterop": true, // import/export 호환성
-    "strict": true // 엄격한 타입 검사
+    "strict": true, // 엄격한 타입 검사
+    "allowJs": true,
+    "checkJs": false
   },
   "include": ["src/**/*"], // 컴파일할 파일들
   "exclude": ["node_modules", "dist", "example"]
