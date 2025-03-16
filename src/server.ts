@@ -39,10 +39,6 @@ class DevServer {
     this.createWebSocketServer();
     this.addAdditionalEntries(this.compiler);
 
-    new webpack.ProvidePlugin({
-      __webpack_dev_server_client__: this.getClientTransport(),
-    }).apply(compiler);
-
     new webpack.HotModuleReplacementPlugin().apply(this.compiler);
     this.setupWatchFiles();
 
@@ -53,39 +49,23 @@ class DevServer {
     return require.resolve("./client/clients/WebSocketClient");
   }
 
-  watchFiles(watchPath: string, watchOptions: any) {
-    const watcher = chokidar.watch(watchPath, watchOptions);
-
-    watcher.on("change", (item) => {
-      console.log(`파일 변경 감지: ${item}`);
-      if (this.webSocketServer) {
-        this.sendMessage(this.webSocketClients, "invalid");
-      }
-    });
-
-    this.watcher = watcher;
-  }
   createWebSocketServer() {
-    if (!this.webSocketServer) {
-      this.webSocketServer = new WebSocket.Server({ server: this.server });
+    this.webSocketServer = new WebSocket.Server({ server: this.server });
 
-      this.webSocketServer.on("connection", (ws) => {
-        this.webSocketClients.push(ws as WebSocket);
+    this.webSocketServer.on("connection", (ws) => {
+      this.webSocketClients.push(ws as WebSocket);
 
-        // 연결된 클라이언트에게 현재 상태 전송
-        if (this.stats) {
-          this.sendStats([ws as WebSocket], this.getStats(this.stats));
-        }
+      if (this.options.hot === true || this.options.hot === "only") {
+        this.sendMessage([ws as WebSocket], "hot");
+      }
 
-        // 클라이언트와 연결 종료 시 정리
-        ws.on("close", () => {
-          const index = this.webSocketClients.indexOf(ws as WebSocket);
-          if (index !== -1) {
-            this.webSocketClients.splice(index, 1);
-          }
-        });
-      });
-    }
+      if (!this.stats) {
+        return;
+      }
+
+      // 연결된 클라이언트에게 현재 상태 전송
+      this.sendStats([ws as WebSocket], this.getStats(this.stats), true);
+    });
   }
 
   setupHooks(): void {
@@ -96,18 +76,11 @@ class DevServer {
     });
     this.compiler.hooks.done.tap(
       "webpack-dev-server",
-      /**
-       * @param {Stats | MultiStats} stats
-       */
+
       (stats) => {
         if (this.webSocketServer) {
           this.sendStats(this.webSocketClients, this.getStats(stats));
         }
-
-        /**
-         * @private
-         * @type {Stats | MultiStats}
-         */
         this.stats = stats;
       }
     );
@@ -119,10 +92,15 @@ class DevServer {
     return statsObj.toJson(stats);
   }
 
-  sendStats(clients: WebSocket[], stats: StatsCompilation): void {
+  sendStats(
+    clients: WebSocket[],
+    stats: StatsCompilation,
+    force?: boolean
+  ): void {
     console.log("sendStats 호출됨, 클라이언트:", stats);
 
     const shouldEmit =
+      !force &&
       stats &&
       (!stats.errors || stats.errors.length === 0) &&
       (!stats.warnings || stats.warnings.length === 0) &&
@@ -164,6 +142,19 @@ class DevServer {
     }
   }
 
+  watchFiles(watchPath: string, watchOptions: any) {
+    const watcher = chokidar.watch(watchPath, watchOptions);
+
+    watcher.on("change", (item) => {
+      console.log(`파일 변경 감지: ${item}`);
+      if (this.webSocketServer) {
+        this.sendMessage(this.webSocketClients, "invalid");
+      }
+    });
+
+    this.watcher = watcher;
+  }
+
   setupWatchStaticFiles() {
     const watchFiles = this.options.static;
 
@@ -191,17 +182,6 @@ class DevServer {
     }
   }
 
-  addClient(client: WebSocket) {
-    this.webSocketClients.push(client);
-
-    // 클라이언트 연결 해제 시 제거
-    client.on("close", () => {
-      const idx = this.webSocketClients.indexOf(client);
-      if (idx >= 0) this.webSocketClients.splice(idx, 1);
-    });
-  }
-
-  // 서버 종료
   close() {
     if (this.watcher) {
       this.watcher.close();
@@ -262,49 +242,6 @@ class DevServer {
       }).apply(compiler);
     }
   }
-
-  // addAdditionalEntries(compiler: webpack.Compiler) {
-  //   const additionalEntries = [];
-
-  //   let webSocketURLStr = "";
-
-  //   const searchParams = new URLSearchParams();
-
-  //   const protocol = "ws:";
-
-  //   searchParams.set("protocol", protocol);
-
-  //   const hostname = this.options.host ?? "0.0.0.0";
-
-  //   searchParams.set("hostname", hostname);
-
-  //   const port = this.options.port ?? "0";
-
-  //   searchParams.set("port", String(port));
-
-  //   const pathname = this.options.path;
-
-  //   searchParams.set("pathname", pathname);
-
-  //   searchParams.set("hot", "true");
-
-  //   webSocketURLStr = searchParams.toString();
-
-  //   additionalEntries.push(`${this.getClientEntry()}?${webSocketURLStr}`);
-
-  //   const clientHotEntry = this.getClientHotEntry();
-  //   if (clientHotEntry) {
-  //     additionalEntries.push(clientHotEntry);
-  //   }
-
-  //   const webpack = compiler.webpack;
-
-  //   for (const additionalEntry of additionalEntries) {
-  //     new webpack.EntryPlugin(compiler.context, additionalEntry, {
-  //       name: undefined,
-  //     }).apply(compiler);
-  //   }
-  // }
 }
 
 const devServer = new DevServer(compiler, config.devServer);
