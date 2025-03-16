@@ -40,7 +40,6 @@ class DevServer {
     this.addAdditionalEntries(this.compiler);
 
     new webpack.HotModuleReplacementPlugin().apply(this.compiler);
-    this.setupWatchFiles();
 
     app.use(webpackDevMiddleware(this.compiler));
   }
@@ -139,37 +138,6 @@ class DevServer {
       }
     } else {
       this.sendMessage(clients, "ok");
-    }
-  }
-
-  watchFiles(watchPath: string, watchOptions: any) {
-    const watcher = chokidar.watch(watchPath, watchOptions);
-
-    watcher.on("change", (item) => {
-      console.log(`파일 변경 감지: ${item}`);
-      if (this.webSocketServer) {
-        this.sendMessage(this.webSocketClients, "invalid");
-      }
-    });
-
-    this.watcher = watcher;
-  }
-
-  setupWatchStaticFiles() {
-    const watchFiles = this.options.static;
-
-    if (watchFiles.length > 0) {
-      for (const item of watchFiles) {
-        if (item.watch) {
-          this.watchFiles(item.directory, item.watch);
-        }
-      }
-    }
-  }
-
-  setupWatchFiles() {
-    if (this.options.watchPath) {
-      this.watchFiles(this.options.watchPath, this.options.watchOptions || {});
     }
   }
 
